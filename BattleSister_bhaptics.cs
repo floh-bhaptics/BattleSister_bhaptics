@@ -27,46 +27,51 @@ namespace BattleSister_bhaptics
         }
 
         #region Internal functions
-        
-        private static (float, float) getAngleAndShift(Rigidbody player, Vector3 hit)
+
+        private static KeyValuePair<float, float> getAngleAndShift(Transform player, Vector3 hit)
         {
-            Vector3 patternOrigin = new Vector3(0f, 0f, 1f);
+            // bhaptics pattern starts in the front, then rotates to the left. 0° is front, 90° is left, 270° is right.
             // y is "up", z is "forward" in local coordinates
+            Vector3 patternOrigin = new Vector3(0f, 0f, 1f);
             Vector3 hitPosition = hit - player.position;
-            Quaternion PlayerRotation = player.transform.rotation;
-            Vector3 playerDir = PlayerRotation.eulerAngles;
+            Quaternion myPlayerRotation = player.rotation;
+            Vector3 playerDir = myPlayerRotation.eulerAngles;
+            // get rid of the up/down component to analyze xz-rotation
             Vector3 flattenedHit = new Vector3(hitPosition.x, 0f, hitPosition.z);
-            float earlyhitAngle = Vector3.Angle(flattenedHit, patternOrigin);
-            Vector3 earlycrossProduct = Vector3.Cross(flattenedHit, patternOrigin);
-            if (earlycrossProduct.y > 0f) { earlyhitAngle *= -1f; }
-            //tactsuitVr.LOG("EarlyHitAngle: " + earlyhitAngle.ToString());
-            float myRotation = earlyhitAngle - playerDir.y;
+
+            // get angle. .Net < 4.0 does not have a "SignedAngle" function...
+            float hitAngle = Vector3.Angle(flattenedHit, patternOrigin);
+            // check if cross product points up or down, to make signed angle myself
+            Vector3 crossProduct = Vector3.Cross(flattenedHit, patternOrigin);
+            if (crossProduct.y < 0f) { hitAngle *= -1f; }
+            // relative to player direction
+            float myRotation = hitAngle - playerDir.y;
+            // switch directions (bhaptics angles are in mathematically negative direction)
             myRotation *= -1f;
+            // convert signed angle into [0, 360] rotation
             if (myRotation < 0f) { myRotation = 360f + myRotation; }
 
-            /*
-            Vector3 relativeHitDir = Quaternion.Euler(playerDir) * hitPosition;
-            Vector2 xzHitDir = new Vector2(relativeHitDir.x, relativeHitDir.z);
-            Vector2 patternOrigin = new Vector2(0f, 1f);
-            float hitAngle = Vector2.SignedAngle(xzHitDir, patternOrigin);
-            //hitAngle *= -1;
-            //hitAngle += 90f;
-            hitAngle += 180f;
-            //tactsuitVr.LOG("HitAngle: " + hitAngle.ToString());
-            if (hitAngle < 0f) { hitAngle = 360f + hitAngle; }
-            */
+
+            // up/down shift is in y-direction
+            // in Shadow Legend, the torso Transform has y=0 at the neck,
+            // and the torso ends at roughly -0.5 (that's in meters)
+            // so cap the shift to [-0.5, 0]...
             float hitShift = hitPosition.y;
-            //tactsuitVr.LOG("HitShift: " + hitShift.ToString());
-            if (hitShift > 1.7f) { hitShift = 0.5f; }
-            else if (hitShift < 1.0f) { hitShift = -0.5f; }
-            else { hitShift = (hitShift - 1.0f) / 1.7f - 0.5f; }
+            float upperBound = 0.0f;
+            float lowerBound = -0.5f;
+            if (hitShift > upperBound) { hitShift = 0.5f; }
+            else if (hitShift < lowerBound) { hitShift = -0.5f; }
+            // ...and then spread/shift it to [-0.5, 0.5]
+            else { hitShift = (hitShift - lowerBound) / (upperBound - lowerBound) - 0.5f; }
 
             //tactsuitVr.LOG("Relative x-z-position: " + relativeHitDir.x.ToString() + " "  + relativeHitDir.z.ToString());
             //tactsuitVr.LOG("HitAngle: " + hitAngle.ToString());
             //tactsuitVr.LOG("HitShift: " + hitShift.ToString());
-            return (myRotation, hitShift);
+
+            // No tuple returns available in .NET < 4.0, so this is the easiest quickfix
+            return new KeyValuePair<float, float>(myRotation, hitShift);
         }
-        
+
 
         private static bool isRightHandFunc(bool isPrimaryHand)
         {
@@ -208,9 +213,9 @@ namespace BattleSister_bhaptics
                         playbackKey = "BulletHit";
                         break;
                 }
-                (float angle, float shift) = getAngleAndShift(myPlayer, myHit);
-                if (shift == 0.5) { tactsuitVr.HeadShot(playbackKey, angle); }
-                tactsuitVr.PlayBackHit(playbackKey, angle, shift);
+                var angleShift = getAngleAndShift(myPlayer.transform, myHit);
+                if (angleShift.Value >= 0.5f) tactsuitVr.HeadShot(playbackKey, angleShift.Key);
+                else tactsuitVr.PlayBackHit(playbackKey, angleShift.Key, angleShift.Value);
             }
         }
 
