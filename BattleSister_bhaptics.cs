@@ -133,7 +133,6 @@ namespace BattleSister_bhaptics
                         break;
 
                     case DamageType.Fire:
-                        tactsuitVr.LOG("Fire gun!");
                         feedbackKey = "Melee";
                         break;
 
