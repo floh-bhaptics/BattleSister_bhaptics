@@ -53,7 +53,7 @@ namespace BattleSister_bhaptics
 
 
             // up/down shift is in y-direction
-            // in Shadow Legend, the torso Transform has y=0 at the neck,
+            // in Battle Sister, the torso Transform has y=0 at the neck,
             // and the torso ends at roughly -0.5 (that's in meters)
             // so cap the shift to [-0.5, 0]...
             float hitShift = hitPosition.y;
@@ -61,12 +61,8 @@ namespace BattleSister_bhaptics
             float lowerBound = -0.5f;
             if (hitShift > upperBound) { hitShift = 0.5f; }
             else if (hitShift < lowerBound) { hitShift = -0.5f; }
-            // ...and then spread/shift it to [-0.5, 0.5]
+            // ...and then spread/shift it to [-0.5, 0.5], which is how bhaptics expects it
             else { hitShift = (hitShift - lowerBound) / (upperBound - lowerBound) - 0.5f; }
-
-            //tactsuitVr.LOG("Relative x-z-position: " + relativeHitDir.x.ToString() + " "  + relativeHitDir.z.ToString());
-            //tactsuitVr.LOG("HitAngle: " + hitAngle.ToString());
-            //tactsuitVr.LOG("HitShift: " + hitShift.ToString());
 
             // No tuple returns available in .NET < 4.0, so this is the easiest quickfix
             return new KeyValuePair<float, float>(myRotation, hitShift);
@@ -143,33 +139,11 @@ namespace BattleSister_bhaptics
                 tactsuitVr.GunRecoil(feedbackKey, isRightHand);
                 if ((__instance.AttachedHoldInteraction.HasPrimaryGrasp) && (__instance.AttachedHoldInteraction.HasSecondaryGrasp))
                 { tactsuitVr.GunSecondHand(!isRightHand); }
-                //tactsuitVr.LOG("damageType: " + damageType.ToString());
             }
         }
 
 
 
-        /*
-                [HarmonyPatch(typeof(FlameThrower), "SetFiringOn")]
-                public class bhaptics_FlameThrowerOn
-                {
-                    [HarmonyPostfix]
-                    public static void Postfix()
-                    {
-                        //tactsuitVr.LOG("Flame on");
-                    }
-                }
-
-                [HarmonyPatch(typeof(FlameThrower), "SetFiringOff")]
-                public class bhaptics_FlameThrowerOff
-                {
-                    [HarmonyPostfix]
-                    public static void Postfix()
-                    {
-                        //tactsuitVr.LOG("Flame off");
-                    }
-                }
-        */
         [HarmonyPatch(typeof(ImpactManager), "ProcessImpact")]
         public class bhaptics_ProcessImpact
         {
@@ -235,35 +209,11 @@ namespace BattleSister_bhaptics
             [HarmonyPostfix]
             public static void Postfix()
             {
-                tactsuitVr.LOG("Player died.");
+                //tactsuitVr.LOG("Player died.");
                 tactsuitVr.StopThreads();
             }
         }
-/*
-        [HarmonyPatch(typeof(HealthAudio), "OnHealthDecreased")]
-        public class bhaptics_OnHealthDecreased
-        {
-            [HarmonyPostfix]
-            public static void Postfix(HealthAudio __instance)
-            {
-                if (__instance.m_healthStatus.m_currentHealth < 0.2 * __instance.m_healthStatus.m_startHealth) { tactsuitVr.StartHeartBeat(); }
-                if (__instance.m_healthStatus.m_currentHealth >= 0.2 * __instance.m_healthStatus.m_startHealth) { tactsuitVr.StopHeartBeat(); }
-                tactsuitVr.LOG("Lost health: " + __instance.m_healthStatus.m_currentHealth.ToString());
-            }
-        }
 
-        [HarmonyPatch(typeof(HealthAudio), "OnHealthIncreased")]
-        public class bhaptics_OnHealthIncreased
-        {
-            [HarmonyPostfix]
-            public static void Postfix(HealthAudio __instance)
-            {
-                if (__instance.m_healthStatus.m_currentHealth >= 0.2 * __instance.m_healthStatus.m_startHealth) { tactsuitVr.StopHeartBeat(); }
-                if (__instance.m_healthStatus.m_currentHealth < 0.2 * __instance.m_healthStatus.m_startHealth) { tactsuitVr.StartHeartBeat(); }
-                tactsuitVr.LOG("Gained health: " + __instance.m_healthStatus.m_currentHealth.ToString());
-            }
-        }
-*/
         [HarmonyPatch(typeof(HealthStatusReceiver_DamageHud), "OnApplyHealthStatusUpdate")]
         public class bhaptics_OnHealthUpdated
         {
