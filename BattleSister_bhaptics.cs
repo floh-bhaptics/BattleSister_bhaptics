@@ -13,7 +13,7 @@ using MyBhapticsTactsuit;
 using Il2CppBattleSister.Ballistics;
 using Il2Cpp;
 
-[assembly: MelonInfo(typeof(BattleSister_bhaptics.BattleSister_bhaptics), "BattleSister_bhaptics", "1.5.0", "Florian Fahrenberger")]
+[assembly: MelonInfo(typeof(BattleSister_bhaptics.BattleSister_bhaptics), "BattleSister_bhaptics", "2.0.0", "Florian Fahrenberger")]
 [assembly: MelonGame("Pixel Toys", "Battle Sister")]
 
 
