@@ -12,6 +12,10 @@ using MyBhapticsTactsuit;
 
 using BattleSister.Ballistics;
 
+[assembly: MelonInfo(typeof(BattleSister_bhaptics.BattleSister_bhaptics), "BattleSister_bhaptics", "1.5.0", "Florian Fahrenberger")]
+[assembly: MelonGame("Pixel Toys", "Battle Sister")]
+
+
 namespace BattleSister_bhaptics
 {
     public class BattleSister_bhaptics : MelonMod
