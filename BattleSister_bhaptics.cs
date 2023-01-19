@@ -10,7 +10,8 @@ using HarmonyLib;
 
 using MyBhapticsTactsuit;
 
-using BattleSister.Ballistics;
+using Il2CppBattleSister.Ballistics;
+using Il2Cpp;
 
 [assembly: MelonInfo(typeof(BattleSister_bhaptics.BattleSister_bhaptics), "BattleSister_bhaptics", "1.5.0", "Florian Fahrenberger")]
 [assembly: MelonGame("Pixel Toys", "Battle Sister")]
@@ -20,12 +21,11 @@ namespace BattleSister_bhaptics
 {
     public class BattleSister_bhaptics : MelonMod
     {
-        public static TactsuitVR tactsuitVr;
+        public static TactsuitVR tactsuitVr = null!;
         public static bool rightHanded = true;
 
-        public override void OnApplicationStart()
+        public override void OnInitializeMelon()
         {
-            base.OnApplicationStart();
             tactsuitVr = new TactsuitVR();
             tactsuitVr.PlaybackHaptics("HeartBeat");
         }
